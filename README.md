@@ -1,4 +1,21 @@
+# Important Notes to Know Before Interacting with the contract : 
+- Need a  evm wallet like metamask to interact with the protocol, and setup a custom network,
+- since deployment from local environment was not working , the contract was deployed through BlockDag ide
+  and then integrated using the frontend with the contract address and the abi of the contract
+- so no script file was created to deploy with foundry or forge script
+- Due to Time constraint , test were omitted
+- source code directory : /src/BdagTokenEngine.sol
 
+# BlockDag Network Details
+- chain id     : 1043
+- rpc-url      : https://rpc.primordial.bdagscan.com
+- explorer-url : https://primordial.bdagscan.com/
+- faucet-url   : https://primordial.bdagscan.com/faucet
+- symbol       : BDAG
+
+This Info can be used to create a custom Network inside metamask;
+
+---
 
 
 
@@ -54,6 +71,7 @@ This contract inherits from OpenZeppelin's **ReentrancyGuard** for protection ag
 - Allows users to deposit collateral and mint BDAG tokens in one call.
 - Requires the sent ETH amount (`msg.value`) to match or exceed collateral * `PRECISION`.
 - Updates user's collateral balance and mints BDAG tokens accordingly.
+- The function take input in uint256 so no need to convert it to 18 decimals , the backend handles it automatically.
   
 ### `redeemCollateral`
 
@@ -125,6 +143,6 @@ James Lego
 
 ---
 
-For more details, review the contract source code and accompanying documentation.
+F
 
 
