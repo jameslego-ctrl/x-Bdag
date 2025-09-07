@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BDAG Token Engine - BlockDAG Network</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/6.7.1/ethers.umd.min.js"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    /* General Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: linear-gradient(135deg, #2c5364 0%, #203a43 50%, #0f2027 100%);
+      min-height: 100vh;
+      color: #ececec;
+      padding-bottom: 40px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 40px auto;
+      padding: 20px;
+      background: #14272e90; /* Semi-transparent dark background */
+      border-radius: 20px;
+      box-shadow: 0 10px 35px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #26a69a;
+    }
+
+    .header h1 {
+      font-size: 2.8rem;
+      background: linear-gradient(135deg, #26a69a, #004d40);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 900;
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+    }
+
+    .network-info {
+      display: inline-block;
+      padding: 7px 25px;
+      background: #004d40;
+      border-radius: 40px;
+      font-weight: 700;
+      font-size: 1rem;
+      color: #b2dfdb;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      box-shadow: 0 3px 15px #004d4055;
+      user-select: none;
+    }
+
+    .wallet-section {
+      background: #00796bdd;
+      border-radius: 20px;
+      padding: 20px 30px;
+      margin: 30px 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      box-shadow: 0 10px 50px rgba(0, 121, 107, 0.8);
+    }
+
+    .connect-btn {
+      background: linear-gradient(135deg, #26a69a, #004d40);
+      color: #e0f2f1;
+      border: none;
+      padding: 16px 40px;
+      border-radius: 25px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 8px 35px #26a69a90;
+    }
+
+    .connect-btn:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 14px 45px #26a69aff;
+    }
+
+    .connected-info {
+      background: #004d4055;
+      border: 2px solid #26a69aee;
+      border-radius: 24px;
+      padding: 18px 28px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 10px 50px rgba(38, 166, 154, 0.9);
+      font-weight: 600;
+      font-size: 1rem;
+      color: #b2dfdb;
+      user-select: all;
+      word-break: break-all;
+    }
+
+    .grid,
+    .functions-grid {
+      display: grid;
+      gap: 28px;
+      margin-bottom: 35px;
+    }
+
+    .grid {
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+
+    .functions-grid {
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    }
+
+    .card {
+      background: #004d40aa;
+      padding: 26px 28px;
+      border-radius: 20px;
+      box-shadow: 0 8px 40px #004d409a;
+      transition: all 0.35s ease;
+      color: #d0f0e6;
+    }
+
+    .card:hover {
+      box-shadow: 0 15px 70px #26a69aff;
+      transform: translateY(-6px);
+    }
+
+    .card h3 {
+      color: #64ffda;
+      margin-bottom: 22px;
+      font-size: 1.35rem;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      border-bottom: 2px solid #26a69a88;
+      padding-bottom: 12px;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 9px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: #a7ffebdd;
+      letter-spacing: 0.03em;
+      user-select: none;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 2px solid #26a69a88;
+      border-radius: 15px;
+      font-size: 15px;
+      color: #03332fdd;
+      font-weight: 700;
+      transition: all 0.3s ease;
+      background: #b2dfdbee;
+      outline-offset: 2px;
+      outline-color: transparent;
+      user-select: text;
+    }
+
+    .form-group input:focus {
+      border-color: #64ffda;
+      outline-color: #64ffda99;
+      box-shadow: 0 0 7px 2px #64ffdacc;
+      background: #e0f7f4ee;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #26a69acc, #004d4099);
+      color: #004438dd;
+      border: none;
+      padding: 13px 24px;
+      border-radius: 20px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      box-shadow: 0 6px 38px #26a69a88;
+      user-select: none;
+      width: 100%;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: linear-gradient(135deg, #64ffda, #004d40);
+      color: #002a23cc;
+      box-shadow: 0 10px 50px #64ffdab3;
+      transform: translateY(-3px);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-view {
+      background: linear-gradient(135deg, #80deeabb, #006064bb);
+      color: #004144cc;
+      box-shadow: 0 6px 38px #006064bb;
+    }
+
+    .btn-view:hover:not(:disabled) {
+      box-shadow: 0 10px 50px #80deeaee;
+      background: linear-gradient(135deg, #b2ebf2, #00838f);
+      color: #002f32cc;
+    }
+
+    .result-display {
+      padding: 10px 15px;
+      background: #004d4033;
+      border: 1.5px solid #26a69a99;
+      border-radius: 12px;
+      font-family: 'Courier New', monospace;
+      margin-top: 10px;
+      color: #a7ffebcc;
+      font-size: 0.9rem;
+      user-select: text;
+      word-break: break-word;
+      max-height: 110px;
+      overflow-y: auto;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 17px;
+      margin-top: 20px;
+    }
+
+    .info-item {
+      background: #003a3422;
+      padding: 14px 10px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: inset 0 0 10px #26a69a55;
+    }
+
+    .info-item h4 {
+      color: #26a69a;
+      margin-bottom: 10px;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      font-weight: 800;
+      user-select: none;
+    }
+
+    .info-item p {
+      font-size: 1.1em;
+      font-weight: 700;
+      color: #b2dfdbbb;
+    }
+
+    .status {
+      padding: 15px 20px;
+      border-radius: 18px;
+      margin: 20px 0;
+      font-weight: 600;
+      font-size: 1rem;
+      max-width: 100%;
+    }
+
+    .status.success {
+      background: #004d4033;
+      border: 1.5px solid #26a69aff;
+      color: #a7ffebff;
+      box-shadow: 0 0 15px #26a69a99;
+    }
+
+    .status.error {
+      background: #4a000022;
+      border: 1.5px solid #ff3e3ecc;
+      color: #ff6f6fcc;
+      box-shadow: 0 0 15px #ff3e3eaa;
+    }
+
+    .status.loading {
+      background: #004d4055;
+      border: 1.5px solid #80deeaaa;
+      color: #80deeacc;
+      font-style: italic;
+      box-shadow: 0 0 15px #80deea99;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid #b2dfdb;
+      border-top: 3px solid #26a69a;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-right: 12px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .address {
+      font-family: 'Courier New', monospace;
+      background: #004d4099;
+      padding: 8px 15px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      user-select: all;
+      word-break: break-word;
+      color: #a7ffebcc;
+      box-shadow: inset 0 0 12px #26a69aaa;
+    }
+
+    @media (max-width: 768px) {
+      .grid,
+      .functions-grid {
+        grid-template-columns: 1fr;
+      }
+      .header h1 {
+        font-size: 2.2rem;
+      }
+
+      .container {
+        margin: 20px 10px;
+        padding: 15px 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // BlockDAG Network Configuration
+    const BLOCKDAG_CONFIG = {
+      chainId: 1043,
+      rpcUrl: 'https://rpc.primordial.bdagscan.com',
+      chainName: 'BlockDAG',
+      nativeCurrency: { name: 'BDAG', symbol: 'BDAG', decimals: 18 },
+    };
+
+    const CONTRACT_ADDRESS = "0x08093A9C790a0Dfeb8ce17B844794Bc05dd8f7Bd";
+    const CONTRACT_ABI = [
+      {"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+      {"inputs":[],"name":"BdagTokenEngine__AmountMustBeMoreThanZero","type":"error"},
+      {"inputs":[],"name":"BdagTokenEngine__BreaksHealthFactor","type":"error"},
+      {"inputs":[],"name":"BdagTokenEngine__MintingFailed","type":"error"},
+      {"inputs":[],"name":"BdagTokenEngine__NotEnoughCollateral","type":"error"},
+      {"inputs":[],"name":"BdagTokenEngine__TransferFailed","type":"error"},
+      {"inputs":[{"internalType":"uint256","name":"amountBdagToBurn","type":"uint256"}],"name":"burnBdag","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"amountCollateral","type":"uint256"}],"name":"depositCollateral","outputs":[],"stateMutability":"payable","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"amountCollateral","type":"uint256"},{"internalType":"uint256","name":"amountBdagToMint","type":"uint256"}],"name":"depositCollateralAndMintBdag","outputs":[],"stateMutability":"payable","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"amountCollateralToRedeem","type":"uint256"}],"name":"redeemCollateral","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"amountBdagToMint","type":"uint256"}],"name":"mintBdag","outputs":[],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},
+      {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"_healthFactor","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"BDAG_PRICE","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"uint256","name":"amountBdag","type":"uint256"}],"name":"calculateBdagToUsd","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},
+      {"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getBalance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"getTotalUsersInTheProtocol","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getUserInfo","outputs":[{"internalType":"uint256","name":"collateralValueInUsd","type":"uint256"},{"internalType":"uint256","name":"bdagMinted","type":"uint256"},{"internalType":"uint256","name":"healthFactor","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"LIQUIDATION_PRECISION","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"LIQUIDATION_THRESHOLD","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"MIN_HEALTH_FACTOR","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"PRECISION","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},
+      {"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"}
+    ];
+
+    // InputField Component for reuse
+    const InputField = ({ label, value, onChange, type = 'text', placeholder }) => (
+      <div className="form-group">
+        <label>{label}</label>
+        <input
+          type={type}
+          value={value}
+          placeholder={placeholder || ''}
+          onChange={e => onChange(e.target.value)}
+        />
+      </div>
+    );
+
+    function BdagTokenEngine() {
+      const [account, setAccount] = useState(null);
+      const [provider, setProvider] = useState(null);
+      const [contract, setContract] = useState(null);
+      const [userInfo, setUserInfo] = useState(null);
+      const [protocolInfo, setProtocolInfo] = useState(null);
+      const [status, setStatus] = useState(null);
+      const [loading, setLoading] = useState(false);
+
+      const [formInputs, setFormInputs] = useState({
+        approve_spender: '',
+        approve_value: '',
+        transfer_to: '',
+        transfer_value: '',
+        transferFrom_from: '',
+        transferFrom_to: '',
+        transferFrom_value: '',
+        depositCollateral_amount: '',
+        mintBdag_amount: '',
+        burnBdag_amount: '',
+        redeemCollateral_amount: '',
+        depositAndMint_collateral: '',
+        depositAndMint_mint: '',
+        healthFactor_user: '',
+        allowance_owner: '',
+        allowance_spender: '',
+        balanceOf_account: '',
+        getBalance_user: '',
+        getUserInfo_user: '',
+        calculateBdagToUsd_amount: '',
+      });
+
+      const [results, setResults] = useState({});
+
+      useEffect(() => {
+        if (account && contract) {
+          loadUserInfo();
+          loadProtocolInfo();
+          loadConstants();
+        }
+      }, [account, contract]);
+
+      useEffect(() => {
+        if (window.ethereum) {
+          const handleAccountsChanged = (accounts) => {
+            if (accounts.length === 0) {
+              setAccount(null);
+              setContract(null);
+              setStatus({ type: 'error', message: 'Please connect to MetaMask.' });
+            } else {
+              setAccount(accounts[0]);
+            }
+          };
+          const handleChainChanged = (chainIdHex) => {
+            const chainIdNum = parseInt(chainIdHex, 16);
+            if (chainIdNum !== BLOCKDAG_CONFIG.chainId) {
+              setStatus({ type: 'error', message: 'Please switch to BlockDAG Network.' });
+              setContract(null);
+              setAccount(null);
+            } else {
+              window.location.reload();
+            }
+          };
+
+          window.ethereum.on('accountsChanged', handleAccountsChanged);
+          window.ethereum.on('chainChanged', handleChainChanged);
+
+          return () => {
+            if (window.ethereum.removeListener) {
+              window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+              window.ethereum.removeListener('chainChanged', handleChainChanged);
+            }
+          };
+        }
+      }, []);
+
+      const addBlockDAGNetwork = async () => {
+        try {
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: `0x${BLOCKDAG_CONFIG.chainId.toString(16)}`,
+              chainName: BLOCKDAG_CONFIG.chainName,
+              nativeCurrency: BLOCKDAG_CONFIG.nativeCurrency,
+              rpcUrls: [BLOCKDAG_CONFIG.rpcUrl],
+              blockExplorerUrls: ['https://bdagscan.com/'],
+            }],
+          });
+        } catch (error) {
+          console.error('Error adding network:', error);
+        }
+      };
+
+      const connectWallet = async () => {
+        try {
+          if (typeof window.ethereum === 'undefined') {
+            setStatus({ type: 'error', message: 'MetaMask is not installed!' });
+            return;
+          }
+          await addBlockDAGNetwork();
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const provider = new ethers.BrowserProvider(window.ethereum);
+          const signer = await provider.getSigner();
+          const contractInstance = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+          setAccount(accounts[0]);
+          setProvider(provider);
+          setContract(contractInstance);
+          setStatus({ type: 'success', message: 'Wallet connected to BlockDAG network!' });
+        } catch (error) {
+          setStatus({ type: 'error', message: `Error connecting wallet: ${error.message}` });
+        }
+      };
+
+      const loadUserInfo = async () => {
+        try {
+          const info = await contract.getUserInfo(account);
+          const balance = await contract.balanceOf(account);
+          const bdagBalance = await provider.getBalance(account);
+
+          setUserInfo({
+            collateralValueInUsd: ethers.formatUnits(info[0], 18),
+            bdagMinted: ethers.formatUnits(info[1], 18),
+            healthFactor: ethers.formatUnits(info[2], 18),
+            tokenBalance: ethers.formatUnits(balance, 18),
+            nativeBalance: ethers.formatUnits(bdagBalance, 18),
+          });
+        } catch (error) {
+          console.error('Error loading user info:', error);
+          setStatus({ type: 'error', message: 'Failed to load user info.' });
+        }
+      };
+
+      const loadProtocolInfo = async () => {
+        try {
+          const totalUsers = await contract.getTotalUsersInTheProtocol();
+          const totalSupply = await contract.totalSupply();
+          const name = await contract.name();
+          const symbol = await contract.symbol();
+          const decimals = await contract.decimals();
+          setProtocolInfo({
+            totalUsers: totalUsers.toString(),
+            totalSupply: ethers.formatUnits(totalSupply, 18),
+            name,
+            symbol,
+            decimals: decimals.toString(),
+          });
+        } catch (error) {
+          console.error('Error loading protocol info:', error);
+        }
+      };
+
+      const loadConstants = async () => {
+        try {
+          const constants = {};
+          try { constants.bdagPrice = ethers.formatUnits(await contract.BDAG_PRICE(), 18); } catch {}
+          try { constants.liquidationPrecision = (await contract.LIQUIDATION_PRECISION()).toString(); } catch {}
+          try { constants.liquidationThreshold = (await contract.LIQUIDATION_THRESHOLD()).toString(); } catch {}
+          try { constants.minHealthFactor = ethers.formatUnits(await contract.MIN_HEALTH_FACTOR(), 18); } catch {}
+          try { constants.precision = (await contract.PRECISION()).toString(); } catch {}
+
+          setResults(prev => ({ ...prev, constants }));
+        } catch (error) {
+          console.error('Error loading constants:', error);
+        }
+      };
+
+      const updateInput = (key, value) => {
+        setFormInputs(prev => ({ ...prev, [key]: value }));
+      };
+
+      const handleTransaction = async (txFunction, successMessage, functionName) => {
+        setLoading(true);
+        setStatus({ type: 'loading', message: 'Transaction in progress...' });
+
+        try {
+          const tx = await txFunction();
+          await tx.wait();
+          setStatus({ type: 'success', message: successMessage });
+          setResults(prev => ({
+            ...prev,
+            [functionName]: `Transaction successful!`,
+          }));
+          await loadUserInfo();
+          await loadProtocolInfo();
+        } catch (error) {
+          setStatus({ type: 'error', message: `Transaction failed: ${error.reason || error.message}` });
+          setResults(prev => ({
+            ...prev,
+            [functionName]: `Error: ${error.reason || error.message}`,
+          }));
+        }
+
+        setLoading(false);
+      };
+
+      const handleViewFunction = async (viewFunction, functionName) => {
+        setLoading(true);
+
+        try {
+          const result = await viewFunction();
+          let displayResult;
+
+          if (Array.isArray(result)) {
+            displayResult = result.map((r, i) => `[${i}]: ${typeof r === "bigint" || r._isBigNumber ? ethers.formatUnits(r, 18) : r.toString()}`).join(', ');
+          } else if (typeof result === 'bigint' || (result?._isBigNumber)) {
+            displayResult = ethers.formatUnits(result, 18);
+          } else {
+            displayResult = result.toString();
+          }
+
+          setResults(prev => ({
+            ...prev,
+            [functionName]: displayResult,
+          }));
+        } catch (error) {
+          setResults(prev => ({
+            ...prev,
+            [functionName]: `Error: ${error.reason || error.message}`,
+          }));
+        }
+
+        setLoading(false);
+      };
+
+      if (!account) {
+        return (
+          <div className="container">
+            <div className="header">
+              <h1>BDAG Token Engine</h1>
+              <div className="network-info">BlockDAG Network (Chain ID: 1043)</div>
+              <p style={{color:'#b2dfdbee', marginTop:'10px', fontWeight:'600'}}>
+                Connect your wallet to interact with the BDAG protocol on BlockDAG blockchain
+              </p>
+            </div>
+
+            <div className="wallet-section">
+              <button className="connect-btn" onClick={connectWallet}>
+                🔗 Connect to BlockDAG Network
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="container">
+          <div className="header">
+            <h1>BDAG Token Engine</h1>
+            <div className="network-info">BlockDAG Network (Chain ID: 1043)</div>
+            <p style={{color:'#b2dfdbee', marginTop:'10px', fontWeight:'600'}}>
+              Manage your collateral and mint BDAG tokens on BlockDAG blockchain
+            </p>
+          </div>
+
+          <div className="wallet-section" style={{marginBottom:'20px'}}>
+            <div className="connected-info">
+              <div>
+                <strong>Connected:</strong> <span className="address">{account}</span>
+              </div>
+              <button className="connect-btn" onClick={() => window.location.reload()}>
+                Disconnect
+              </button>
+            </div>
+          </div>
+
+          {status && (
+            <div className={`status ${status.type}`}>
+              {status.type === 'loading' && <span className="loading-spinner"></span>}
+              {status.message}
+            </div>
+          )}
+
+          {/* User Info Dashboard */}
+          {userInfo && (
+            <div className="card">
+              <h3>Your Account Dashboard</h3>
+              <div className="info-grid">
+                <div className="info-item">
+                  <h4>Native BDAG Balance</h4>
+                  <p>{parseFloat(userInfo.nativeBalance).toFixed(4)} BDAG</p>
+                </div>
+                <div className="info-item">
+                  <h4>Token Balance</h4>
+                  <p>{parseFloat(userInfo.tokenBalance).toFixed(4)} tokens</p>
+                </div>
+                <div className="info-item">
+                  <h4>Collateral Value</h4>
+                  <p>${parseFloat(userInfo.collateralValueInUsd).toFixed(2)}</p>
+                </div>
+                <div className="info-item">
+                  <h4>BDAG Minted</h4>
+                  <p>{parseFloat(userInfo.bdagMinted).toFixed(4)}</p>
+                </div>
+                <div className="info-item">
+                  <h4>Health Factor</h4>
+                  <p style={{ color: parseFloat(userInfo.healthFactor) > 1 ? '#64ffda' : '#ff5c57' }}>
+                    {parseFloat(userInfo.healthFactor).toFixed(4)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Protocol Info */}
+          {protocolInfo && (
+            <div className="card">
+              <h3>Protocol Information</h3>
+              <div className="info-grid">
+                <div className="info-item">
+                  <h4>Token Name</h4>
+                  <p>{protocolInfo.name}</p>
+                </div>
+                <div className="info-item">
+                  <h4>Symbol</h4>
+                  <p>{protocolInfo.symbol}</p>
+                </div>
+                <div className="info-item">
+                  <h4>Decimals</h4>
+                  <p>{protocolInfo.decimals}</p>
+                </div>
+                <div className="info-item">
+                  <h4>Total Users</h4>
+                  <p>{protocolInfo.totalUsers}</p>
+                </div>
+                <div className="info-item">
+                  <h4>Total Supply</h4>
+                  <p>{parseFloat(protocolInfo.totalSupply).toFixed(4)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Constants */}
+          {results.constants && (
+            <div className="card">
+              <h3>Protocol Constants</h3>
+              <div className="info-grid">
+                {results.constants.bdagPrice && (
+                  <div className="info-item">
+                    <h4>BDAG Price</h4>
+                    <p>${parseFloat(results.constants.bdagPrice).toFixed(4)}</p>
+                  </div>
+                )}
+                {results.constants.minHealthFactor && (
+                  <div className="info-item">
+                    <h4>Min Health Factor</h4>
+                    <p>{parseFloat(results.constants.minHealthFactor).toFixed(4)}</p>
+                  </div>
+                )}
+                {results.constants.liquidationThreshold && (
+                  <div className="info-item">
+                    <h4>Liquidation Threshold</h4>
+                    <p>{results.constants.liquidationThreshold}</p>
+                  </div>
+                )}
+                {results.constants.liquidationPrecision && (
+                  <div className="info-item">
+                    <h4>Liquidation Precision</h4>
+                    <p>{results.constants.liquidationPrecision}</p>
+                  </div>
+                )}
+                {results.constants.precision && (
+                  <div className="info-item">
+                    <h4>Precision</h4>
+                    <p>{results.constants.precision}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Contract Interaction Section */}
+          <div className="section-title" style={{ marginTop: '30px', marginBottom: '20px' }}>
+            <h2 style={{ color: '#64ffda', letterSpacing: '0.2em', fontWeight: '900' }}>
+              Contract Interaction
+            </h2>
+          </div>
+
+          <div className="functions-grid">
+            {/* Approve */}
+            <div className="card">
+              <h3>Approve Spender</h3>
+              <InputField
+                label="Spender Address"
+                value={formInputs.approve_spender}
+                onChange={v => updateInput('approve_spender', v)}
+                placeholder="0x..."
+              />
+              <InputField
+                label="Amount (BDAG tokens)"
+                value={formInputs.approve_value}
+                onChange={v => updateInput('approve_value', v)}
+                type="number"
+                placeholder="0.0"
+              />
+              <button
+                className="btn"
+                disabled={loading}
+                onClick={() =>
+                  handleTransaction(
+                    () =>
+                      contract.approve(
+                        formInputs.approve_spender,
+                        ethers.parseUnits(formInputs.approve_value || '0', 18)
+                      ),
+                    'Approve successful!',
+                    'approve'
+                  )
+                }
+              >
+                Approve
+              </button>
+              {results.approve && <div className="result-display">{results.approve}</div>}
+            </div>
+
+            {/* Transfer */}
+            <div className="card">
+              <h3>Transfer Tokens</h3>
+              <InputField
+                label="Recipient Address"
+                value={formInputs.transfer_to}
+                onChange={v => updateInput('transfer_to', v)}
+                placeholder="0x..."
+              />
+              <InputField
+                label="Amount (BDAG tokens)"
+                value={formInputs.transfer_value}
+                onChange={v => updateInput('transfer_value', v)}
+                type="number"
+                placeholder="0.0"
+              />
+              <button
+                className="btn"
+                disabled={loading}
+                onClick={() =>
+                  handleTransaction(
+                    () =>{
+                    const to = formInputs.transfer_to;
+                    const amount = BigInt(formInputs.transfer_value || "0");
+                    return contract.transfer(to, amount);
+
+                },'Transfer successful!',
+                    'transfer'
+                  )
+                }
+              >
+                Transfer
+              </button>
+              {results.transfer && <div className="result-display">{results.transfer}</div>}
+            </div>
+
+            {/* TransferFrom */}
+            <div className="card">
+              <h3>Transfer From</h3>
+              <InputField
+                label="From Address"
+                value={formInputs.transferFrom_from}
+                onChange={v => updateInput('transferFrom_from', v)}
+                placeholder="0x..."
+              />
+              <InputField
+                label="To Address"
+                value={formInputs.transferFrom_to}
+                onChange={v => updateInput('transferFrom_to', v)}
+                placeholder="0x..."
+              />
+              <InputField
+                label="Amount (BDAG tokens)"
+                value={formInputs.transferFrom_value}
+                onChange={v => updateInput('transferFrom_value', v)}
+                type="number"
+                placeholder="0.0"
+              />
+              <button
+                className="btn"
+                disabled={loading}
+                onClick={() =>
+                  handleTransaction(
+                    () =>{
+                     const from = formInputs.transferFrom_from;
+                    const to = formInputs.transferFrom_to;
+                    const amount = BigInt(formInputs.transferFrom_value || "0");
+                    return contract.transferFrom(from, to, amount);
+
+                     }, 'TransferFrom successful!',
+                    'transferFrom'
+                  )
+                }
+              >
+                Transfer From
+              </button>
+              {results.transferFrom && <div className="result-display">{results.transferFrom}</div>}
+            </div>
+
+            {/* Mint BDAG */}
+            <div className="card">
+              <h3>Mint BDAG Tokens</h3>
+              <InputField
+                label="Amount to Mint"
+                value={formInputs.mintBdag_amount}
+                onChange={v => updateInput('mintBdag_amount', v)}
+                type="number"
+                placeholder="0.0"
+              />
+              <button
+                className="btn"
+                disabled={loading}
+                onClick={() =>
+                  handleTransaction(() => {
+                    const input = formInputs.mintBdag_amount || "0";
+                    const amountParam = BigInt(input);
+                    return contract.mintBdag(amountParam);
+
+                  },'MintBdag successful!','mintBdag')
+                
+                }
+              >
+                Mint BDAG
+              </button>
+              {results.mintBdag && <div className="result-display">{results.mintBdag}</div>}
+            </div>
+
+            {/* Burn BDAG */}
+            <div className="card">
+              <h3>Burn BDAG Tokens</h3>
+              <InputField
+                label="Amount to Burn"
+                value={formInputs.burnBdag_amount}
+                onChange={v => updateInput('burnBdag_amount', v)}
+                type="number"
+                placeholder="0.0"
+              />
+              <button
+                className="btn"
+                disabled={loading}
+                onClick={() =>
+                  handleTransaction(
+                    () => {const input = formInputs.burnBdag_amount || "0";
+                    const amountParam = BigInt(input);
+                    return contract.burnBdag(amountParam);
+
+                 }, 'BurnBdag successful!',
+                    'burnBdag'
+                  )
+                }
+              >
+                Burn BDAG
+              </button>
+              {results.burnBdag && <div className="result-display">{results.burnBdag}</div>}
+            </div>
+
+            {/* Deposit Collateral */}
+            <div className="card">
+              <h3>Deposit Collateral</h3>
+              <InputField
+                label="Amount to Deposit (BDAG native tokens)"
+                value={formInputs.depositCollateral_amount}
+                onChange={v => updateInput('depositCollateral_amount', v)}
+                type="number"
+                placeholder="0.0"
+              />
+              <button
+                className="btn"
+                disabled={loading}
+                onClick={() =>
+        handleTransaction(() => {
+
+        const inputValue = formInputs.depositCollateral_amount || "0";
+        const amountParam = BigInt(inputValue); // unscaled integer parameter
+        const payableValue = ethers.parseUnits(inputValue, 18); // scaled wei for wallet payment
+        return contract.depositCollateral(amountParam, { value: payableValue });
+
+            
+            //   const amount = ethers.parseUnits(formInputs.depositCollateral_amount || '0', 18);
+            //   return contract.depositCollateral(amount, { value: amount });
+            }, 'DepositCollateral successful!', 'depositCollateral')
+            }
+        >
+            Deposit Collateral
+        </button>
+
+              {results.depositCollateral && <div className="result-display">{results.depositCollateral}</div>}
+            </div>
+
+            {/* Deposit Collateral And Mint BDAG */}
+            <div className="card">
+              <h3>Deposit Collateral & Mint BDAG</h3>
+              <InputField
+                label="Collateral Amount (BDAG native tokens)"
+                value={formInputs.depositAndMint_collateral}
+                onChange={v => updateInput('depositAndMint_collateral', v)}
+                type="number"
+                placeholder="0.0"
+              />
+              <InputField
+                label="BDAG to Mint"
+                value={formInputs.depositAndMint_mint}
+                onChange={v => updateInput('depositAndMint_mint', v)}
+                type="number"
+                placeholder="0.0"
+              />
+              <button
+                className="btn"
+                disabled={loading}
+                onClick={() =>
+                  handleTransaction(
+                    () =>{
+                        const collateralInput = formInputs.depositAndMint_collateral || "0";
+                        const mintInput = formInputs.depositAndMint_mint || "0";
+                        const collateralParam = BigInt(collateralInput);
+                        const mintParam = BigInt(mintInput);
+                        const payableVal = ethers.parseUnits(collateralInput, 18);
+                        return contract.depositCollateralAndMintBdag(collateralParam, mintParam, { value: payableVal });
+
+                        },    'DepositCollateralAndMintBdag successful!',
+                    'depositCollateralAndMintBdag'
+                  )
+                }
+              >
+                Deposit & Mint
+              </button>
+              {results.depositCollateralAndMintBdag && (
+                <div className="result-display">{results.depositCollateralAndMintBdag}</div>
+              )}
+            </div>
+
+            {/* Redeem Collateral */}
+            <div className="card">
+              <h3>Redeem Collateral</h3>
+              <InputField
+                label="Amount to Redeem (BDAG tokens)"
+                value={formInputs.redeemCollateral_amount}
+                onChange={v => updateInput('redeemCollateral_amount', v)}
+                type="number"
+                placeholder="0.0"
+              />
+              <button
+                className="btn"
+                disabled={loading}
+                onClick={() =>
+                  handleTransaction(
+                    () => {
+                    const input = formInputs.redeemCollateral_amount || "0";
+                    const amountParam = BigInt(input);
+                    return contract.redeemCollateral(amountParam);
+
+                },'RedeemCollateral successful!',
+                    'redeemCollateral'
+                  )
+                }
+              >
+                Redeem Collateral
+              </button>
+              {results.redeemCollateral && <div className="result-display">{results.redeemCollateral}</div>}
+            </div>
+
+            {/* View Functions */}
+
+            {/* Health Factor */}
+            <div className="card">
+              <h3>Get Health Factor</h3>
+              <InputField
+                label="User Address"
+                value={formInputs.healthFactor_user}
+                onChange={v => updateInput('healthFactor_user', v)}
+                placeholder="0x..."
+              />
+              <button
+                className="btn btn-view"
+                disabled={loading}
+                onClick={() =>
+                  handleViewFunction(() => contract._healthFactor(formInputs.healthFactor_user), '_healthFactor')
+                }
+              >
+                Get Health Factor
+              </button>
+              {results._healthFactor && <div className="result-display">{results._healthFactor}</div>}
+            </div>
+
+            {/* Allowance */}
+            <div className="card">
+              <h3>Get Allowance</h3>
+              <InputField
+                label="Owner Address"
+                value={formInputs.allowance_owner}
+                onChange={v => updateInput('allowance_owner', v)}
+                placeholder="0x..."
+              />
+              <InputField
+                label="Spender Address"
+                value={formInputs.allowance_spender}
+                onChange={v => updateInput('allowance_spender', v)}
+                placeholder="0x..."
+              />
+              <button
+                className="btn btn-view"
+                disabled={loading}
+                onClick={() =>
+                  handleViewFunction(() => contract.allowance(formInputs.allowance_owner, formInputs.allowance_spender), 'allowance')
+                }
+              >
+                Get Allowance
+              </button>
+              {results.allowance && <div className="result-display">{results.allowance}</div>}
+            </div>
+
+            {/* balanceOf */}
+            <div className="card">
+              <h3>Get Token Balance</h3>
+              <InputField
+                label="Account Address"
+                value={formInputs.balanceOf_account}
+                onChange={v => updateInput('balanceOf_account', v)}
+                placeholder="0x..."
+              />
+              <button
+                className="btn btn-view"
+                disabled={loading}
+                onClick={() =>
+                  handleViewFunction(() => contract.balanceOf(formInputs.balanceOf_account), 'balanceOf')
+                }
+              >
+                Get Balance
+              </button>
+              {results.balanceOf && <div className="result-display">{results.balanceOf}</div>}
+            </div>
+
+            {/* getBalance */}
+            <div className="card">
+              <h3>Get User Balance (Protocol)</h3>
+              <InputField
+                label="User Address"
+                value={formInputs.getBalance_user}
+                onChange={v => updateInput('getBalance_user', v)}
+                placeholder="0x..."
+              />
+              <button
+                className="btn btn-view"
+                disabled={loading}
+                onClick={() =>
+                  handleViewFunction(() => contract.getBalance(formInputs.getBalance_user), 'getBalance')
+                }
+              >
+                Get User Balance
+              </button>
+              {results.getBalance && <div className="result-display">{results.getBalance}</div>}
+            </div>
+
+            {/* getUserInfo */}
+            <div className="card">
+              <h3>Get User Info</h3>
+              <InputField
+                label="User Address"
+                value={formInputs.getUserInfo_user}
+                onChange={v => updateInput('getUserInfo_user', v)}
+                placeholder="0x..."
+              />
+              <button
+                className="btn btn-view"
+                disabled={loading}
+                onClick={() =>
+                  handleViewFunction(() => contract.getUserInfo(formInputs.getUserInfo_user), 'getUserInfo')
+                }
+              >
+                Get User Info
+              </button>
+              {results.getUserInfo && <div className="result-display">{results.getUserInfo}</div>}
+            </div>
+
+            {/* calculateBdagToUsd */}
+            <div className="card">
+              <h3>Calculate BDAG to USD</h3>
+              <InputField
+                label="Amount BDAG"
+                value={formInputs.calculateBdagToUsd_amount}
+                onChange={v => updateInput('calculateBdagToUsd_amount', v)}
+                type="number"
+                placeholder="0.0"
+              />
+              <button
+                className="btn btn-view"
+                disabled={loading}
+                onClick={() =>
+                  handleViewFunction(() => contract.calculateBdagToUsd(ethers.parseUnits(formInputs.calculateBdagToUsd_amount || '0', 18)), 'calculateBdagToUsd')
+                }
+              >
+                Calculate
+              </button>
+              {results.calculateBdagToUsd && <div className="result-display">{results.calculateBdagToUsd}</div>}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<BdagTokenEngine />);
+  </script>
+</body>
+</html>
